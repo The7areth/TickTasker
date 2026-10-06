@@ -1,0 +1,28 @@
+name: Bug report
+description: Report a reproducible problem in TickTasker
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide clear steps and expected vs actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Flutter version, platform, emulator/device details.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context

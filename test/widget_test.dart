@@ -1,30 +1,40 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:ticktasker/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('renders TickTasker home sections', (WidgetTester tester) async {
+    await tester.pumpWidget(const TickTaskerApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('TickTasker'), findsOneWidget);
+    expect(find.text('Daily Highlight'), findsOneWidget);
+    expect(find.text('Commitment Slider (0–3)'), findsOneWidget);
+    expect(find.text('Two-Day Rule'), findsOneWidget);
+    expect(find.text('Two-Minute Tasks'), findsOneWidget);
+    expect(find.text('Study → Write Pipeline'), findsOneWidget);
+    expect(find.text('Commitment level: 1 / 3'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('updates commitment slider value', (WidgetTester tester) async {
+    await tester.pumpWidget(const TickTaskerApp());
+
+    final slider = tester.widget<Slider>(find.byType(Slider));
+    slider.onChanged?.call(3);
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Commitment level: 3 / 3'), findsOneWidget);
+  });
+
+  testWidgets('filters tasks to two-minute only', (WidgetTester tester) async {
+    await tester.pumpWidget(const TickTaskerApp());
+
+    expect(find.text('Outline weekly report (15 min)'), findsOneWidget);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Outline weekly report (15 min)'), findsNothing);
+    expect(find.text('Reply to the design question'), findsOneWidget);
+    expect(find.text('Schedule one focus block'), findsOneWidget);
   });
 }
