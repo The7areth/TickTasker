@@ -5,9 +5,15 @@ import '../../models/task.dart';
 const commitmentLabels = ['Idea', 'Maybe', 'Today', 'Now'];
 
 class TaskEditor extends StatefulWidget {
-  const TaskEditor({super.key, required this.repo, this.task});
+  const TaskEditor({
+    super.key,
+    required this.repo,
+    this.task,
+    this.duplicate = false,
+  });
   final TaskRepo repo;
   final Task? task;
+  final bool duplicate;
   @override
   State<TaskEditor> createState() => _TaskEditorState();
 }
@@ -37,14 +43,14 @@ class _TaskEditorState extends State<TaskEditor> {
     });
     try {
       await widget.repo.save(
-        id: widget.task?.id,
+        id: widget.duplicate ? null : widget.task?.id,
         title: title.text,
         commitment: commitment,
         estimateMinutes: minutes.text.trim().isEmpty
             ? null
             : int.parse(minutes.text.trim()),
       );
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context, true);
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -59,7 +65,13 @@ class _TaskEditorState extends State<TaskEditor> {
   Widget build(BuildContext context) => PopScope(
     canPop: !saving,
     child: AlertDialog(
-      title: Text(widget.task == null ? 'Add task' : 'Edit task'),
+      title: Text(
+        widget.duplicate
+            ? 'Duplicate task'
+            : widget.task == null
+            ? 'Add task'
+            : 'Edit task',
+      ),
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(

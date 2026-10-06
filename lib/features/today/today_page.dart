@@ -42,11 +42,12 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  Future<void> run(Future<void> Function() action) async {
-    if (busy) return;
+  Future<bool> run(Future<void> Function() action) async {
+    if (busy) return false;
     setState(() => busy = true);
     try {
       await action();
+      return true;
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -55,16 +56,28 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
           ),
         );
       }
+      return false;
     } finally {
       if (mounted) setState(() => busy = false);
     }
   }
 
-  void edit([Task? task]) => showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => TaskEditor(repo: widget.repo, task: task),
-  );
+  Future<void> edit([Task? task, bool duplicate = false]) async {
+    final saved = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) =>
+          TaskEditor(repo: widget.repo, task: task, duplicate: duplicate),
+    );
+    if (saved == true && duplicate && mounted) {
+      setState(() {
+        completed = false;
+        search.clear();
+        twoMinuteOnly = false;
+        minCommitment = 0;
+      });
+    }
+  }
 
   Future<void> remove(Task task) async {
     final confirmed = await showDialog<bool>(
@@ -85,8 +98,40 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
       ),
     );
     if (confirmed == true && mounted) {
-      await run(() => widget.repo.delete(task.id));
+      final deleted = await run(() => widget.repo.delete(task.id));
+      if (deleted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Task deleted'),
+            duration: const Duration(seconds: 8),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () => restoreDeleted(task),
+            ),
+          ),
+        );
+      }
     }
+  }
+
+  Future<void> restoreDeleted(Task task) async {
+    final restored = await run(() => widget.repo.restore(task));
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          restored ? 'Task restored' : 'Could not restore the task.',
+        ),
+        action: restored
+            ? null
+            : SnackBarAction(
+                label: 'Retry',
+                onPressed: () => restoreDeleted(task),
+              ),
+      ),
+    );
   }
 
   @override
@@ -103,6 +148,8 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
       final activeCount = repo.tasks.where((task) => !task.isCompleted).length;
       final doneCount = repo.tasks.length - activeCount;
       final theme = Theme.of(context);
+      final hasFilters =
+          search.text.isNotEmpty || twoMinuteOnly || minCommitment != 0;
       return Scaffold(
         appBar: AppBar(
           title: const Text('TickTasker'),
@@ -240,6 +287,15 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
                               : 'Try another search or change the filters.',
                           textAlign: TextAlign.center,
                         ),
+                        if (hasFilters)
+                          TextButton(
+                            onPressed: () => setState(() {
+                              search.clear();
+                              twoMinuteOnly = false;
+                              minCommitment = 0;
+                            }),
+                            child: const Text('Clear filters'),
+                          ),
                       ],
                     ),
                   ),
@@ -321,6 +377,8 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
                               onSelected: (value) {
                                 if (value == 'edit') {
                                   edit(task);
+                                } else if (value == 'duplicate') {
+                                  edit(task, true);
                                 } else {
                                   remove(task);
                                 }
@@ -329,6 +387,10 @@ class _TodayPageState extends State<TodayPage> with WidgetsBindingObserver {
                                 PopupMenuItem(
                                   value: 'edit',
                                   child: Text('Edit'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'duplicate',
+                                  child: Text('Duplicate'),
                                 ),
                                 PopupMenuItem(
                                   value: 'delete',

@@ -9,7 +9,9 @@
 7. Complete the highlighted task using its checkbox. Open **Completed** to inspect it or reopen it.
 8. Choose **Edit** from a task's options. Change its title, commitment, or estimate. Clear the estimate to remove it.
 9. Reload the app. Saved tasks, completion states, and today's highlight remain on the same device/browser profile.
-10. Choose **Delete** from task options and confirm to remove a task.
+10. Choose **Duplicate** from task options to reuse a task. Edit the draft, then save; the copy appears in Open tasks with a fresh ID and no highlight.
+11. Choose **Delete** from task options and confirm. The message offers **Undo** for eight seconds (accessibility settings may keep it visible longer). Undo is available in that message, rather than a persistent trash folder.
+12. If search or filters hide all tasks, select **Clear filters** to reset them while keeping your Open/Completed view.
 
 An empty title or an invalid time estimate receives a form-level explanation. Estimates accept whole minutes between 1 and 1440. Titles support up to 200 characters.
 

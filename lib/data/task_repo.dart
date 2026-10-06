@@ -109,6 +109,18 @@ class TaskRepo extends ChangeNotifier {
   Future<void> delete(String id) =>
       _commit(() => _tasks.where((task) => task.id != id).toList());
 
+  /// Restore a deleted task without overwriting subsequent edits or a new highlight.
+  Future<void> restore(Task task) => _commit(() {
+    if (_tasks.any((current) => current.id == task.id)) return [..._tasks];
+    final hasHighlight = _tasks.any(
+      (current) => current.isHighlightOn(clock()),
+    );
+    final restored = hasHighlight && task.isHighlightOn(clock())
+        ? task.copyWith(clearHighlight: true)
+        : task;
+    return [..._tasks, restored];
+  });
+
   List<Task> filtered({
     String query = '',
     bool twoMinuteOnly = false,

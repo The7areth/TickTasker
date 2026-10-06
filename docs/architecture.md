@@ -31,7 +31,10 @@ Unknown schema versions and malformed snapshots lead to a load/retry screen. The
 - Highlighted tasks sort first, then commitment, then title.
 - All figures summarize the entire saved task list, rather than the currently filtered results.
 - Add/edit forms remain open on failure, retaining the user's input.
-- Delete requires confirmation. Completed tasks can be reopened.
+- Delete requires confirmation and offers a brief Undo action. Restoration inserts only the deleted task, preserves newer changes, and yields to any newer daily highlight. Failed restoration offers Retry. Undo history is not persisted across app restarts.
+- Duplicate opens a prefilled editor; saving assigns a new ID and resets completion and highlight state. It then opens the unfiltered Open view so the copy is visible.
+- Clear filters resets the search, duration, and commitment filters while retaining the selected Open/Completed view.
+- Completed tasks can be reopened.
 - Material controls provide keyboard focus and accessible labels; layout uses wrapping filters and a bounded, scrollable content area.
 
 ## Platform scope

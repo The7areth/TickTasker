@@ -147,4 +147,43 @@ void main() {
     );
     expect(Task.fromJson(task.toJson()).toJson(), task.toJson());
   });
+  test(
+    'undo preserves later tasks and newer highlight; repeated restore is safe',
+    () async {
+      await repo.save(title: 'Original', commitment: 3, estimateMinutes: 2);
+      await repo.toggleHighlight(repo.tasks.single.id);
+      final deleted = repo.tasks.single;
+      await repo.delete(deleted.id);
+      await repo.save(title: 'New highlight', commitment: 2);
+      await repo.toggleHighlight(repo.tasks.single.id);
+      await repo.restore(deleted);
+      await repo.restore(deleted);
+      expect(repo.tasks.length, 2);
+      expect(
+        repo.tasks.where((task) => task.isHighlightOn(day)).single.title,
+        'New highlight',
+      );
+      await repo.load();
+      expect(repo.tasks.last.title, 'Original');
+      expect(repo.tasks.last.estimateMinutes, 2);
+    },
+  );
+
+  test(
+    'undo restores completed highlight and can retry after storage failure',
+    () async {
+      await repo.save(title: 'Original', commitment: 2);
+      await repo.toggleHighlight(repo.tasks.single.id);
+      await repo.toggleComplete(repo.tasks.single.id);
+      final deleted = repo.tasks.single;
+      await repo.delete(deleted.id);
+      store.fail = true;
+      await expectLater(repo.restore(deleted), throwsStateError);
+      expect(repo.tasks, isEmpty);
+      store.fail = false;
+      await repo.restore(deleted);
+      expect(repo.tasks.single.isCompleted, isTrue);
+      expect(repo.tasks.single.isHighlightOn(day), isTrue);
+    },
+  );
 }

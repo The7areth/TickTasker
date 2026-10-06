@@ -14,6 +14,8 @@ A focused Flutter task manager by [Hareth Al-Fawaz](https://github.com/The7areth
 - **Choose one daily highlight.** Pin, unpin, and complete it from the task list. The highlight expires on the next local calendar day; the task remains.
 - **Find the next small step** with search, a two-minute filter, and a Today + Now filter.
 - **Track progress** through separate open and completed views. Reopen completed tasks or delete them after confirmation.
+- **Reuse tasks** with Duplicate in the task menu. Adjust the draft and save a fresh, incomplete copy.
+- **Recover a deletion** with Undo in the confirmation message, or reset an empty search with Clear filters.
 - **Keep tasks between sessions** using local storage. Failed saves preserve the previous state and present a retryable error.
 - **Use light or dark mode** based on the device setting, with a responsive layout for phone and desktop widths.
 

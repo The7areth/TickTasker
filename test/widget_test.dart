@@ -166,6 +166,83 @@ void main() {
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     expect(repo.tasks, isEmpty);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(repo.tasks.single.title, 'Revised');
+    expect(find.text('Task restored'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
+  testWidgets(
+    'duplicate opens editable draft and starts incomplete without a highlight',
+    (tester) async {
+      final repo = TaskRepo(MemoryStore());
+      addTearDown(repo.dispose);
+      await repo.load();
+      await repo.save(
+        title: 'Weekly review',
+        commitment: 2,
+        estimateMinutes: 15,
+      );
+      await repo.toggleComplete(repo.tasks.single.id);
+      await repo.toggleHighlight(repo.tasks.single.id);
+      await tester.pumpWidget(TickTaskerApp(repository: repo));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Completed (1)'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byTooltip('Task options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Task options'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Duplicate'));
+      await tester.pumpAndSettle();
+      expect(find.text('Duplicate task'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Task title'),
+        'Next weekly review',
+      );
+      await tester.tap(find.text('Save task'));
+      await tester.pumpAndSettle();
+      expect(repo.tasks.length, 2);
+      final copy = repo.tasks.last;
+      expect(copy.title, 'Next weekly review');
+      expect(find.text('Next weekly review'), findsOneWidget);
+      expect(find.text('Your tasks'), findsOneWidget);
+      expect(copy.estimateMinutes, 15);
+      expect(copy.commitment, 2);
+      expect(copy.isCompleted, isFalse);
+      expect(copy.highlightDay, isNull);
+      expect(copy.id, isNot(repo.tasks.first.id));
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'clear filters resets search and filters within the selected view',
+    (tester) async {
+      final repo = TaskRepo(MemoryStore());
+      addTearDown(repo.dispose);
+      await repo.load();
+      await repo.save(title: 'Research', commitment: 1, estimateMinutes: 20);
+      await repo.toggleComplete(repo.tasks.single.id);
+      await tester.pumpWidget(TickTaskerApp(repository: repo));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Completed (1)'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('≤ 2 minutes'));
+      await tester.tap(find.text('Today + Now'));
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Search tasks'),
+        'missing',
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Clear filters'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Clear filters'));
+      await tester.pumpAndSettle();
+      expect(find.text('Research'), findsOneWidget);
+      expect(find.text('Completed tasks'), findsOneWidget);
+      expect(find.text('Clear filters'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }
